@@ -17,11 +17,11 @@
 
 ---
 
-## Why Agent Tabs
+## Why Agent Tabs on GIWA
 
 As AI applications become more autonomous, agents increasingly need to pay for data, compute, and API calls on their own. Existing payment approaches create a gap: subscriptions and API keys are hard to scope per action, while giving an agent an unrestricted wallet makes a small bug or compromised key financially risky.
 
-Agent Tabs gives an agent a bounded payment tab instead. The owner selects an approved service, sets a maximum payment per request and a daily cap, then signs the policy. The agent can make eligible payments without gaining control of the owner's full wallet.
+Agent Tabs uses GIWA Sepolia to demonstrate a stablecoin-settlement control layer for those payments. The owner gives an agent a bounded payment tab: they select an approved service, set a maximum payment per request and a daily cap, then sign the policy. The agent can make eligible payments without gaining control of the owner's full wallet.
 
 The model is designed for services that support stablecoin, pay-per-request payment. It follows an **x402-style** request, quote, payment, and receipt narrative: a paid endpoint responds with an HTTP 402-style quote, the policy is checked before payment, and completed work produces a receipt for settlement.
 
@@ -49,7 +49,7 @@ Owner signs policy -> Agent requests a paid resource -> Endpoint returns an x402
 -> Policy checks merchant + limits -> Completed work creates a receipt -> Valid receipts settle on GIWA
 ```
 
-The front end demonstrates this **x402-style** payment and receipt flow on GIWA Sepolia. It is a testnet simulation, not a claim of production x402 interoperability or live merchant integrations.
+The front end demonstrates an **x402-style** payment and receipt flow on GIWA Sepolia.
 
 ## Live demo
 
@@ -69,7 +69,7 @@ Suggested walkthrough:
 | --- | --- | --- |
 | AgentTabsTestToken (ATST) | `0x945a8d9ac7B375D0a27BaA761a9B995eA9d6fdEB` | [View](https://sepolia-explorer.giwa.io/address/0x945a8d9ac7B375D0a27BaA761a9B995eA9d6fdEB) |
 
-**ATST** is a project-issued test settlement token used to simulate stablecoin settlement on GIWA Sepolia. It has no value and is not represented as a real stablecoin.
+**ATST** is a project-issued test token deployed for this demo. It temporarily represents a stablecoin settlement asset on GIWA Sepolia. It has no value and is not represented as a real stablecoin.
 
 The Agent Tabs application contract is included in this repository as an MVP implementation and is not presented here as a deployed production contract.
 
