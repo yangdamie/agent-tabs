@@ -6,24 +6,30 @@
 
 <p align="center">
   <strong>Give agents a tab. Keep the wallet in control.</strong><br />
-  A GIWA Sepolia MVP for controlled, receipt-based stablecoin settlement by AI research agents.
+  A GIWA Sepolia MVP for controlled, receipt-based stablecoin settlement by AI agents.
 </p>
 
 <p align="center">
   <a href="https://agent-tabs-eta.vercel.app/"><strong>Live demo</strong></a> | 
-  <a href="#giwa-sepolia-deployment"><strong>Contracts</strong></a> | 
+  <a href="#test-settlement-token"><strong>Test token</strong></a> | 
   <a href="#local-development"><strong>Run locally</strong></a>
 </p>
 
 ---
 
-## The problem
+## Why Agent Tabs
 
-A DeFi researcher may let an AI agent purchase paid on-chain signals: whale-flow snapshots, liquidity-pool scans, or token-risk reports. Those calls can be inexpensive individually, but giving the agent an unrestricted wallet is unsafe.
+As AI applications become more autonomous, agents increasingly need to pay for data, compute, and API calls on their own. Existing payment approaches create a gap: subscriptions and API keys are hard to scope per action, while giving an agent an unrestricted wallet makes a small bug or compromised key financially risky.
 
-**Agent Tabs** sits between the agent and a paid data endpoint. The owner creates a limited payment tab: one approved merchant, a maximum payment per request, and a daily spending cap. The agent can only spend within that signed policy.
+Agent Tabs gives an agent a bounded payment tab instead. The owner selects an approved service, sets a maximum payment per request and a daily cap, then signs the policy. The agent can make eligible payments without gaining control of the owner's full wallet.
 
-Agent Tabs is **not** an AI model, trading platform, or API marketplace. It is the payment-control layer for agents that already use paid services.
+The model is designed for services that support stablecoin, pay-per-request payment. It follows an **x402-style** request, quote, payment, and receipt narrative: a paid endpoint responds with an HTTP 402-style quote, the policy is checked before payment, and completed work produces a receipt for settlement.
+
+## Demo scenario: paid on-chain research
+
+The interface uses a DeFi research agent as a concrete example. It purchases on-chain signals such as whale-flow snapshots, liquidity-pool scans, and token-risk reports. Each call is inexpensive, but high-frequency automated requests can still exceed a research budget without clear limits.
+
+In the demo, the owner creates one tab for an approved on-chain data source. The agent can request a signal only when its price and daily usage comply with the signed policy.
 
 ## What this MVP demonstrates
 
@@ -36,14 +42,14 @@ Agent Tabs is **not** an AI model, trading platform, or API marketplace. It is t
 - MetaMask-compatible owner and agent signatures
 - A guided interface for successful calls, blocked calls, timeout releases, and settlement preview
 
-## How it works
+## Payment model
 
 ```text
-Owner signs policy -> Agent requests paid data -> Policy checks merchant + limits
--> Completed work creates a receipt -> Valid receipts settle together on GIWA
+Owner signs policy -> Agent requests a paid resource -> Endpoint returns an x402-style quote
+-> Policy checks merchant + limits -> Completed work creates a receipt -> Valid receipts settle on GIWA
 ```
 
-The front end demonstrates an **x402-style** payment and receipt flow on GIWA Sepolia. It is a testnet simulation and does not claim production x402 interoperability or live merchant integrations.
+The front end demonstrates this **x402-style** payment and receipt flow on GIWA Sepolia. It is a testnet simulation, not a claim of production x402 interoperability or live merchant integrations.
 
 ## Live demo
 
@@ -57,24 +63,24 @@ Suggested walkthrough:
 4. Run a whale-flow snapshot or pool scan.
 5. Review the receipt and settlement preview.
 
-## GIWA Sepolia deployment
+## Test settlement token
 
-| Contract | Address | Explorer |
+| Token | Address | Explorer |
 | --- | --- | --- |
-| AgentTabsFinal | `0x1b63A6FA0638Eeb9334710Cae2B59f6Ed39F9c70` | [View](https://sepolia-explorer.giwa.io/address/0x1b63A6FA0638Eeb9334710Cae2B59f6Ed39F9c70) |
 | AgentTabsTestToken (ATST) | `0x945a8d9ac7B375D0a27BaA761a9B995eA9d6fdEB` | [View](https://sepolia-explorer.giwa.io/address/0x945a8d9ac7B375D0a27BaA761a9B995eA9d6fdEB) |
 
 **ATST** is a project-issued test settlement token used to simulate stablecoin settlement on GIWA Sepolia. It has no value and is not represented as a real stablecoin.
+
+The Agent Tabs application contract is included in this repository as an MVP implementation and is not presented here as a deployed production contract.
 
 ## Repository structure
 
 ```text
 app/                         Next.js entry point
 public/demo.html             Interactive product demo
-contracts/AgentTabsFinal.sol Payment vault, policy, and receipt settlement
-contracts/AgentTabsTestToken.sol
-                             Test settlement token for GIWA Sepolia
-docs/                        Architecture and demo notes
+AgentTabsFinal.sol           Payment vault, policy, and receipt settlement
+AgentTabsTestToken.sol       Test settlement token for GIWA Sepolia
+README.md                    Project overview and testnet notes
 ```
 
 ## Local development
@@ -98,3 +104,10 @@ Then open `http://localhost:3000`.
 ## Scope and safety
 
 This is an unaudited testnet MVP. It is built to demonstrate delegated spending controls and receipt-based settlement, not to hold real user funds. A production version would require audited contracts, real service-provider integrations, stronger key management, and a fully implemented payment-protocol adapter.
+
+## Next steps
+
+- Connect the policy flow to compatible paid endpoints and real x402 payment adapters.
+- Add a merchant-facing receipt verification and settlement view.
+- Support multiple agent tabs and policy templates for different teams or tasks.
+- Audit the contracts and add stronger account and key-management controls before any production use.
