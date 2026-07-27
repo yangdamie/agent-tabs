@@ -171,8 +171,8 @@
           </div>
           <div class="deployment">
             <small>Deployed on GIWA Sepolia</small>
-            <a href="https://sepolia-explorer.giwa.io/address/0x1b63A6FA0638Eeb9334710Cae2B59f6Ed39F9c70" target="_blank" rel="noreferrer">AgentTabsFinal · 0x1b63…F9c70 ↗</a>
-            <a href="https://sepolia-explorer.giwa.io/address/0x945a8d9ac7B375D0a27BaA761a9B995eA9d6fdEB" target="_blank" rel="noreferrer">ATST · 0x945a…fdEB ↗</a>
+            <a href="https://sepolia-explorer.giwa.io/address/0xE572687A35e877C30602AC6D45f990b2Cdc91a8d" target="_blank" rel="noreferrer">Agent Tabs · 0xE572…1a8d ↗</a>
+            <a href="https://sepolia-explorer.giwa.io/address/0x29FacB7eCbd885F443A96fAfD6090eD690D5dF1E" target="_blank" rel="noreferrer">ATST faucet token · 0x29Fa…dF1E ↗</a>
           </div>
           <div class="data">
             <div class="row"><span>Owner</span><b id="owner">Not connected</b></div>
@@ -189,7 +189,8 @@
               <div><small>Owner available</small><b><span id="ownerBalance">5.00</span> ATST</b></div>
               <div><small>Tab pool</small><b><span id="poolBalance">0.00</span> ATST</b></div>
             </div>
-            <div class="actions"><button class="green" id="fund">Fund 1.00 ATST</button><button id="withdraw">Withdraw remaining</button></div>
+            <div class="actions"><button class="green" id="claim">Claim 5 ATST</button><button class="green" id="fund">Fund 1.00 ATST</button><button id="withdraw">Withdraw remaining</button></div>
+            <p class="tokenNote">Test faucet: 5 ATST per wallet every 24 hours.</p>
           </div>
           <div class="actions"><button class="dark" id="pause">Pause tab</button><button id="reset">Reset session</button></div>
         </article>
@@ -259,7 +260,7 @@ resultHash</aside>
           <div class="amount"><span id="batchTotal">0.00</span> <small>ATST</small></div>
           <p id="batchText">0 receipts · 0 transactions</p>
           <button class="green" id="preview">Preview settlement</button>
-          <small>Settlement remains simulated until the GIWA contract is deployed.</small>
+          <small>Receipt settlement remains simulated in this MVP.</small>
         </aside>
       </div>
     </section>
@@ -301,6 +302,11 @@ resultHash</aside>
       rpcUrls:['https://sepolia-rpc.giwa.io'],
       blockExplorerUrls:['https://sepolia-explorer.giwa.io']
     };
+    const DEPLOYMENT={
+      token:'0x29FacB7eCbd885F443A96fAfD6090eD690D5dF1E',
+      tabs:'0xE572687A35e877C30602AC6D45f990b2Cdc91a8d',
+      merchant:'0x7e6497a15e5B603056f7Ada7a5C4A36D536D1f34'
+    };
     const $=selector=>document.querySelector(selector);
     const state={connected:false,address:'',paused:false,policySigned:false,daily:.20,per:.03,ownerBalance:5,tabBalance:0,receipts:[],events:[],lastRequest:'None'};
 
@@ -340,6 +346,37 @@ resultHash</aside>
         $('#gas').textContent=`${(Number(BigInt(value))/1e18).toFixed(5)} ETH`;
       }catch{$('#gas').textContent='Unavailable'}
     }
+    function addressWord(address){return address.slice(2).toLowerCase().padStart(64,'0')}
+    async function refreshTokenBalance(){
+      if(!state.connected)return;
+      try{
+        const result=await window.ethereum.request({method:'eth_call',params:[{to:DEPLOYMENT.token,data:'0x70a08231'+addressWord(state.address)},'latest']});
+        state.ownerBalance=Number(BigInt(result))/1e18;
+        render();
+      }catch(error){console.warn('Could not load ATST balance',error)}
+    }
+    async function waitForReceipt(hash){
+      for(let attempt=0;attempt<30;attempt++){
+        const receipt=await window.ethereum.request({method:'eth_getTransactionReceipt',params:[hash]});
+        if(receipt)return receipt;
+        await new Promise(resolve=>setTimeout(resolve,1000));
+      }
+      return null;
+    }
+    async function claimTokens(){
+      if(!state.connected)return toast('Connect the owner wallet first.',true);
+      try{
+        const hash=await window.ethereum.request({method:'eth_sendTransaction',params:[{from:state.address,to:DEPLOYMENT.token,data:'0x4e71d92d'}]});
+        toast('Claim submitted. Confirming on GIWA Sepolia...');
+        const receipt=await waitForReceipt(hash);
+        if(!receipt || receipt.status==='0x0')throw new Error('CLAIM_FAILED');
+        await refreshTokenBalance();
+        event('ATST faucet','5.00','CLAIMED');
+        toast('5.00 ATST claimed. You can now fund the tab.');
+      }catch(error){
+        toast(error.code===4001?'Claim cancelled.':'Claim unavailable. Each wallet can claim once every 24 hours.',true);
+      }
+    }
     async function connect(){
       if(!window.ethereum)return toast('Open this page in Chrome with MetaMask enabled.',true);
       try{
@@ -347,6 +384,7 @@ resultHash</aside>
         await ensureGiwa();
         state.connected=true;state.address=accounts[0];
         await gasBalance();
+        await refreshTokenBalance();
         event('Owner wallet','—','CONNECTED');
         toast('Owner wallet connected on GIWA Sepolia.');
       }catch(error){toast(error.code===4001?'Connection cancelled.':'Could not connect MetaMask.',true)}
@@ -457,6 +495,7 @@ resultHash</aside>
     $('#daily').oninput=event=>{state.daily=Number(event.target.value);render()};
     $('#per').oninput=event=>{state.per=Number(event.target.value);render()};
     $('#policyForm').onsubmit=event=>{event.preventDefault();signPolicy()};
+    $('#claim').onclick=claimTokens;
     $('#fund').onclick=()=>{
       if(!state.connected)return toast('Connect the owner wallet first.',true);
       if(state.ownerBalance<1)return toast('The demo owner balance is too low.',true);
