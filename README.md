@@ -17,7 +17,7 @@
 
 ---
 
-## Why Agent Tabs on GIWA
+## Why Agent Tabs 
 
 As AI applications become more autonomous, agents increasingly need to pay for data, compute, and API calls on their own. Existing payment approaches create a gap: subscriptions and API keys are hard to scope per action, while giving an agent an unrestricted wallet makes a small bug or compromised key financially risky.
 
