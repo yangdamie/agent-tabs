@@ -373,17 +373,22 @@ resultHash</aside>
       if(!receipt || receipt.status==='0x0')throw new Error(`${functionName.toUpperCase()}_FAILED`);
       return hash;
     }
-    async function refreshTokenBalance(){
+    async function refreshTokenBalance(attempts=1){
       if(!state.connected)return;
-      try{
-        const ownerBalance=await callContract(DEPLOYMENT.token,TOKEN_ABI,'balanceOf',[state.address]);
-        state.ownerBalance=Number(formatUnits(ownerBalance,18));
-        if(isAddress(DEPLOYMENT.tabs)){
-          const vaultBalance=await callContract(DEPLOYMENT.tabs,TABS_ABI,'vaultBalance',[state.address]);
-          state.tabBalance=Number(formatUnits(vaultBalance,18));
+      for(let attempt=0;attempt<attempts;attempt++){
+        try{
+          const ownerBalance=await callContract(DEPLOYMENT.token,TOKEN_ABI,'balanceOf',[state.address]);
+          state.ownerBalance=Number(formatUnits(ownerBalance,18));
+          if(isAddress(DEPLOYMENT.tabs)){
+            const vaultBalance=await callContract(DEPLOYMENT.tabs,TABS_ABI,'vaultBalance',[state.address]);
+            state.tabBalance=Number(formatUnits(vaultBalance,18));
+          }
+          render();
+        }catch(error){
+          console.warn('Could not load ATST balance',error);
         }
-        render();
-      }catch(error){console.warn('Could not load ATST balance',error)}
+        if(attempt<attempts-1)await new Promise(resolve=>setTimeout(resolve,1200));
+      }
     }
     async function waitForReceipt(hash){
       for(let attempt=0;attempt<30;attempt++){
@@ -398,7 +403,7 @@ resultHash</aside>
       try{
         const hash=await sendContract(DEPLOYMENT.token,TOKEN_ABI,'claim');
         toast('Claim submitted. Confirming on GIWA Sepolia...');
-        await refreshTokenBalance();
+        await refreshTokenBalance(4);
         event('ATST faucet','5.00','CLAIMED');
         toast('5.00 ATST claimed. You can now fund the tab.');
       }catch(error){
@@ -412,7 +417,7 @@ resultHash</aside>
         await ensureGiwa();
         state.connected=true;state.address=accounts[0];
         await gasBalance();
-        await refreshTokenBalance();
+        await refreshTokenBalance(4);
         event('Owner wallet','—','CONNECTED');
         toast('Owner wallet connected on GIWA Sepolia.');
       }catch(error){toast(error.code===4001?'Connection cancelled.':'Could not connect MetaMask.',true)}
@@ -476,7 +481,7 @@ resultHash</aside>
       try{
         const resultHash=randomHex(32);
         await sendContract(DEPLOYMENT.tabs,TABS_ABI,'spend',[state.address,atst(price),randomHex(32),resultHash]);
-        await refreshTokenBalance();
+        await refreshTokenBalance(4);
         const receipt={id,amount:price,resultHash,merchant:'0x7e64...1f34',time:now(),status:'Paid'};
         state.receipts.unshift(receipt);
         event(dataCall,price.toFixed(2),'PAID');
@@ -537,7 +542,7 @@ resultHash</aside>
         await sendContract(DEPLOYMENT.token,TOKEN_ABI,'approve',[DEPLOYMENT.tabs,atst(1)]);
         toast('Approve confirmed. Depositing ATST into Agent Tabs...');
         await sendContract(DEPLOYMENT.tabs,TABS_ABI,'deposit',[atst(1)]);
-        await refreshTokenBalance();
+        await refreshTokenBalance(4);
         event('Owner funding','1.00','DEPOSITED');
         toast('1.00 ATST deposited into Agent Tabs on GIWA Sepolia.');
       }catch(error){
