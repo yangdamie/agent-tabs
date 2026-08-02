@@ -68,6 +68,12 @@ Suggested walkthrough:
 6. Run `Whale-flow snapshot`.
 7. Check that ATST moved from the tab contract to the merchant address.
 
+## Demo Video
+
+A short walkthrough of the Agent Tabs MVP is available here:
+
+[Watch the demo video](./public/agent-tabs-demo.mp4)
+
 ## Contracts
 
 | Contract | Address | Explorer |
