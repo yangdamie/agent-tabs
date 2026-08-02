@@ -72,7 +72,7 @@ Suggested walkthrough:
 
 A short walkthrough of the Agent Tabs MVP is available here:
 
-[Watch the demo video](https://github.com/yangdamie/agent-tabs/releases/tag/demo-v1)
+[Watch the demo video](https://github.com/yangdamie/agent-tabs/releases/download/demo-v1/agent-tabs-demo.mp4)
 
 ## Contracts
 
